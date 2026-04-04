@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/vasili-sikora/weather-app/internal/domain/models"
+	"github.com/vasili-sikora/weather-app/internal/pkg/config"
 )
 
 type Logger interface {
@@ -19,22 +20,19 @@ type WeatherInfo interface {
 type cliApp struct {
 	logger      Logger
 	weatherInfo WeatherInfo
+	config      config.Config
 }
 
-func New(logger Logger, weatherInfo WeatherInfo) *cliApp {
+func New(logger Logger, weatherInfo WeatherInfo, appConfig config.Config) *cliApp {
 	return &cliApp{
 		logger:      logger,
 		weatherInfo: weatherInfo,
+		config:      appConfig,
 	}
 }
 
 func (c *cliApp) Run() error {
-	const (
-		latitude  = 53.6688
-		longitude = 23.8223
-	)
-
-	tempInfo := c.weatherInfo.GetTemperature(latitude, longitude)
+	tempInfo := c.weatherInfo.GetTemperature(c.config.L.Lat, c.config.L.Long)
 	c.logger.Info(fmt.Sprintf("Температура воздуха - %.2f градусов цельсия", tempInfo.Temp))
 
 	return nil
