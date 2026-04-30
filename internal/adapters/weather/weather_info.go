@@ -23,7 +23,7 @@ type response struct {
 type Logger interface {
 	Info(msg string)
 	Debug(msg string)
-	Error(msg string)
+	Error(msg string, err error)
 }
 
 type weatherInfo struct {
@@ -39,6 +39,10 @@ func New(logger Logger) *weatherInfo {
 }
 
 func (wi *weatherInfo) getWeatherInfo(lat, long float64) error {
+	if wi.isLoaded {
+		return nil
+	}
+
 	var weatherResponse response
 
 	params := fmt.Sprintf(
@@ -52,22 +56,25 @@ func (wi *weatherInfo) getWeatherInfo(lat, long float64) error {
 
 	resp, err := http.Get(url)
 	if err != nil {
+		wi.logger.Error("can't get weather data", err)
 		customErr := errors.New("can't get weather data from openmeteo")
 		return errors.Join(customErr, err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			wi.logger.Error(fmt.Sprintf("can't close body err - %s", err.Error()))
+			wi.logger.Error("can't close body", err)
 		}
 	}()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
+		wi.logger.Error("can't read data from body", err)
 		customErr := errors.New("can't read data from response")
 		return errors.Join(customErr, err)
 	}
 
 	if err := json.Unmarshal(data, &weatherResponse); err != nil {
+		wi.logger.Error("can't unmarshal json data", err)
 		customErr := errors.New("can't unmarshal data from response")
 		return errors.Join(customErr, err)
 	}
@@ -78,14 +85,10 @@ func (wi *weatherInfo) getWeatherInfo(lat, long float64) error {
 	return nil
 }
 
-func (wi *weatherInfo) GetTemperature(lat, long float64) models.TempInfo {
-	if !wi.isLoaded {
-		if err := wi.getWeatherInfo(lat, long); err != nil {
-			wi.logger.Error(err.Error())
-		}
-	}
+func (wi *weatherInfo) GetTemperature(lat, long float64) (models.TempInfo, error) {
+	err := wi.getWeatherInfo(lat, long)
 
 	return models.TempInfo{
 		Temp: wi.current.Temp,
-	}
+	}, err
 }

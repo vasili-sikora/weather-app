@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	pogodaby "github.com/vasili-sikora/weather-app/internal/adapters/pogoda_by"
 	"github.com/vasili-sikora/weather-app/internal/adapters/weather"
 	"github.com/vasili-sikora/weather-app/internal/pkg/app/cli"
 	"github.com/vasili-sikora/weather-app/internal/pkg/config"
@@ -34,7 +35,7 @@ func main() {
 
 	app := cli.New(appLogger, weatherInfo, appConfig)
 	if err := app.Run(); err != nil {
-		appLogger.Error(err.Error())
+		appLogger.Error("some error", err)
 		os.Exit(1)
 	}
 
@@ -45,6 +46,8 @@ func getProvider(appConfig config.Config, appLogger cli.Logger) cli.WeatherInfo 
 	switch appConfig.P.Type {
 	case "open-meteo":
 		return weather.New(appLogger)
+	case "pogoda":
+		return pogodaby.New(appLogger)
 	default:
 		return weather.New(appLogger)
 	}

@@ -10,11 +10,11 @@ import (
 type Logger interface {
 	Info(msg string)
 	Debug(msg string)
-	Error(msg string)
+	Error(msg string, err error)
 }
 
 type WeatherInfo interface {
-	GetTemperature(float64, float64) models.TempInfo
+	GetTemperature(float64, float64) (models.TempInfo, error)
 }
 
 type cliApp struct {
@@ -32,7 +32,12 @@ func New(logger Logger, weatherInfo WeatherInfo, appConfig config.Config) *cliAp
 }
 
 func (c *cliApp) Run() error {
-	tempInfo := c.weatherInfo.GetTemperature(c.config.L.Lat, c.config.L.Long)
+	tempInfo, err := c.weatherInfo.GetTemperature(c.config.L.Lat, c.config.L.Long)
+	if err != nil {
+		c.logger.Error("can't get temp info", err)
+		return err
+	}
+
 	c.logger.Info(fmt.Sprintf("Температура воздуха - %.2f градусов цельсия", tempInfo.Temp))
 
 	return nil

@@ -31,6 +31,11 @@ func (l *StdLogger) Debug(msg string) {
 	}
 }
 
-func (l *StdLogger) Error(msg string) {
+func (l *StdLogger) Error(msg string, err error) {
+	if err != nil {
+		l.errorLogger.Printf("%s: %v\n", msg, err)
+		return
+	}
+
 	l.errorLogger.Println(msg)
 }
