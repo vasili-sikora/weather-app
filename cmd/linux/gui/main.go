@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/vasili-sikora/weather-app/internal/pkg/app/cli"
+	"github.com/vasili-sikora/weather-app/internal/pkg/app/gui"
 	"github.com/vasili-sikora/weather-app/internal/pkg/config"
 	"github.com/vasili-sikora/weather-app/internal/pkg/flags"
+	fynegui "github.com/vasili-sikora/weather-app/internal/pkg/gui/fyne"
 	"github.com/vasili-sikora/weather-app/internal/pkg/providers"
 	"github.com/vasili-sikora/weather-app/pkg/logger"
 )
@@ -31,12 +32,10 @@ func main() {
 	debugMode := os.Getenv("DEBUG") == "1"
 	appLogger := logger.New(debugMode)
 	weatherInfo := providers.GetProvider(appConfig, appLogger)
+	provider := fynegui.NewP()
+	app := gui.New(appLogger, provider, weatherInfo, appConfig)
 
-	app := cli.New(appLogger, weatherInfo, appConfig)
 	if err := app.Run(); err != nil {
-		appLogger.Error("some error", err)
-		os.Exit(1)
+		panic(err)
 	}
-
-	os.Exit(0)
 }
